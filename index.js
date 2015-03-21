@@ -6,17 +6,19 @@ var spawn = require('./spawn-as-promised');
 var randomstring = require("randomstring");
 var q = require('q');
 var shortid = require('shortid');
-var tika = require('tika');
 var PDF = require('pdfinfo');
 
-var ITERATIONS = 30;
+var ITERATIONS = 10;
+var command = '/usr/local/callas_pdfaPilot_CLI/pdfaPilot';
+var tempDirectory = '/tmp';
+var endpoint = 'pdfapilot.example.com:1600';
 
 var generate = function () {
   var unique = shortid.generate();
 
-  var filename = '/tmp/source_' + unique + '.docx';
-  var outputfile = '/tmp/destination_' + unique + '.pdf';
-  var pdfafile = '/tmp/destination_' + unique + '_PDFA.pdf';
+  var filename = tempDirectory + '/source_' + unique + '.doc';
+  var outputfile = tempDirectory + '/destination_' + unique + '.pdf';
+  var pdfafile = tempDirectory + '/destination_' + unique + '_PDFA.pdf';
 
   var docx = officegen('docx');
   docx.setMaxListeners(0);
@@ -42,13 +44,13 @@ var generate = function () {
   });
 
   out.on('finish', function () {
-    var command = '/usr/local/callas_pdfaPilot_CLI/pdfaPilot';
-    var args = ['--dist', '--endpoint=pdfapilot.example.com:1600 ',
+    var args = ['--dist', '--endpoint=' + endpoint,
         filename, '--level=2b', '--outputfile=' + outputfile, '--overwrite', '--nolocal'];
 
     spawn(command, args).then(function (result) {
       if (result.code >= 100) {
         console.log('Result code "' + result.code + '" indicates an error');
+
         return;
       }
 
@@ -56,18 +58,22 @@ var generate = function () {
 
       pdf.info(function (err, meta) {
         if (err) {
-          fs.copySync(pdfafile, '/tmp/error.pdf');
+          console.log('Error while validating the PDF');
+
+          fs.copySync(pdfafile, tempDirectory + '/error_' + unique + '.pdf');
 
           fs.unlinkSync(filename);
           fs.unlinkSync(pdfafile);
 
-          throw err;
+          return;
         }
 
         if (meta.title !== hash) {
-          fs.copySync(pdfafile, '/tmp/error.pdf');
+          console.log('The file that\'s converted is not the same as the source!');
 
-          throw new Error('The file that\'s converted is not the same as the source!');
+          fs.copySync(pdfafile, tempDirectory + '/error_' + unique + '.pdf');
+
+          return;
         }
 
         console.log('File verified...');
@@ -76,7 +82,9 @@ var generate = function () {
         fs.unlinkSync(pdfafile);
       });
     }).fail(function (err) {
-      console.log(err);
+      console.log('');
+      console.log(err.stdout.join('\n'));
+      console.log('');
 
       fs.unlinkSync(filename);
       fs.unlinkSync(pdfafile);
