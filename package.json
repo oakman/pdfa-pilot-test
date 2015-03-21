@@ -1,0 +1,21 @@
+{
+  "name": "pdfa-pilot-test",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Niklas Ekman <niklas.ekman@gmail.com>",
+  "license": "ISC",
+  "dependencies": {
+    "fs-extra": "^0.16.5",
+    "officegen": "^0.2.9",
+    "pdfinfo": "git+https://github.com/ecarter/node-pdfinfo.git",
+    "q": "^1.2.0",
+    "randomstring": "^1.0.3",
+    "shortid": "^2.2.1",
+    "underscore-node": "^0.1.2",
+    "winston": "^0.9.0"
+  }
+}
